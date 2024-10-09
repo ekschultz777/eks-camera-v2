@@ -8,78 +8,101 @@
 #include <pthread.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <unistd.h>
 
 using namespace cv;
 
+// Run  on background thread
 void *operation(void *arg) {
-    printf("Running camera...\n");
     Camera *camera = (Camera *)arg;
+
     pthread_mutex_lock(camera->mutex);
-    if (!camera->capture->isOpened()) {
+    // std::string const pipeString = camera->pipeline;
+    printf("Created pipeline string: %s\n", camera->pipeline);
+    cv::VideoCapture capture(camera->pipeline);
+
+    if (!(capture).isOpened()) {
         printf("!!! Failed to open file: %s\n", "Video.mp4");
         return NULL;
     }
     pthread_mutex_unlock(camera->mutex);
 
+    // FIXME: Share this using camera struct
     double framesPerSecond = 30.0;
-    double secondsPerFrame = (double) ((1 / framesPerSecond) * 1000); // Get ms
+    double secondsPerFrame = (double) (1 / framesPerSecond);
     printf("Playing at %f fps\n", framesPerSecond);
-
+    cv::Mat frame;
     while (1) {
-        if (!(*camera->capture).read(*camera->frame)) {
-            printf("Failed to capture frame; Aborting...\n");
-            break;
-        }
-        
-        cv::imshow("window", *camera->frame);
 
-        char key = cv::waitKey(secondsPerFrame);
-        if (key == 27) // ESC
-            break;
+        if (!capture.read(frame)) {
+            printf("Failed to capture frame\n");
+        }
+        pthread_mutex_lock(camera->mutex);
+        *camera->frame = frame;
+        pthread_mutex_unlock(camera->mutex);
+        // Sleep frame duration in microseconds
+        usleep(secondsPerFrame * 1000 * 1000);
     }
-    pthread_mutex_unlock(camera->mutex);
     return NULL;
 }
 
-Camera createCamera(char const *pipe) {
+// Run  on main thread
+Camera createCamera(char const *pipe, pthread_t *thread, pthread_mutex_t *mutex, cv::Mat *frame) {
     // Cast to C++ string for OpenCV
-    std::string const pipeString = pipe;
-    printf("Created pipeline string: %s\n", pipeString.c_str());
-    pthread_t thread;
-    // TODO: Replace these when using GStreamer
-    // int captureType = cv::CAP_GSTREAMER;
-    // cv::VideoCapture capture = cv::VideoCapture(pipeString, captureType);
-    cv::VideoCapture capture(pipeString);
+    // std::string const pipeString = pipe;
+    // printf("Created pipeline string: %s\n", pipeString.c_str());
+
+    // Declare variabless
+    // pthread_t thread;
+    // // TODO: Replace these when using GStreamer
+    // // int captureType = cv::CAP_GSTREAMER;
+    // // cv::VideoCapture capture = cv::VideoCapture(pipeString, captureType);
+    // cv::VideoCapture capture;
     bool running = false;
-    cv::Mat frame;
-    pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, NULL);
+    // cv::Mat frame;
+    // pthread_mutex_t mutex;
+    pthread_mutex_init(mutex, NULL);
     Camera camera = { 
-        .mutex = &mutex,
-        .thread = &thread,
+        .mutex = mutex,
         .pipeline = pipe,
-        .capture = &capture,
-        .running = &running,
-        .frame = &frame,
+        // .capture = capture,
+        .frame = frame,
+        .running = running,
     };
-    // pthread_mutex_lock(camera.mutex);
-    if (pthread_create(&thread, NULL, operation, &camera) != 0) {
+    if (pthread_create(thread, NULL, operation, &camera) != 0) {
         printf("Failed to properly initialize thread!\n");
     }
+
+    // Send them to a struct that keeps pointers (We need to 
+    // safely access each value from its pointer on a different 
+    // thread)
+    // Camera camera = { 
+    //     .thread = thread,
+    //     .mutex = mutex,
+    //     .pipeline = pipe,
+    //     .capture = capture,
+    //     .frame = frame,
+    //     .running = running,
+    // };
+    // pthread_mutex_lock(camera.mutex);
+    // if (pthread_create(&thread, NULL, operation, &camera) != 0) {
+    //     printf("Failed to properly initialize thread!\n");
+    // }
     // pthread_mutex_unlock(camera.mutex);
     // cv::Mat frame;
     // (*camera.capture).read(frame);
     return camera;
 }
 
+// Run  on main thread
 void startCamera(Camera *camera) {
-    pthread_mutex_lock(camera->mutex);
-    if (*(camera->running) != true) {
-        *camera->running = true;
+    // pthread_mutex_init(camera->mutex, NULL);
+    // if (pthread_create(&camera->thread, NULL, operation, &camera) != 0) {
+    //     printf("Failed to properly initialize thread!\n");
+    // }
+    if ((camera->running) != true) {
+        camera->running = true;
     }
-    // Join the thread
-    pthread_join(*(camera->thread), NULL);
-    pthread_mutex_unlock(camera->mutex);
 }
 
 void stopCamera(Camera *camera) {
@@ -90,7 +113,7 @@ void updateCamera(Camera *camera) {
 
 }
 
-// void release(Camera *camera) {
+// void releaseCamera(Camera *camera) {
 //     // pthread_mutex_unlock(&(camera->mutex));
 //     pthread_mutex_lock(camera->mutex);
 //     pthread_cancel(*(camera->thread));
@@ -98,14 +121,14 @@ void updateCamera(Camera *camera) {
 // }
 
 // ChatGPT generated
-void release(Camera *camera) {
+void releaseCamera(Camera *camera) {
     pthread_mutex_lock(camera->mutex);
-    pthread_cancel(*(camera->thread));
-    pthread_join(*(camera->thread), NULL); // Ensure the thread has finished
-    delete camera->thread;
-    delete camera->capture; // Release VideoCapture
+    // pthread_cancel(*camera->thread);
+    // pthread_join(*(camera->thread), NULL); // Ensure the thread has finished
+    // delete camera->thread;
+    // delete camera.capture; // Release VideoCapture
     delete camera->frame; // Release frame
-    delete camera->running; // Release running flag
+    // delete camera->running; // Release running flag
     pthread_mutex_destroy(camera->mutex); // Destroy mutex
     delete camera->mutex; // Release mutex memory
     camera = nullptr; // Avoid dangling pointer

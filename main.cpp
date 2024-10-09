@@ -16,11 +16,20 @@ int main() {
     Camera camera = createCamera(pipeline, &thread, &mutex, &frame);
     startCamera(&camera);
 
+    char const *pipeline2 = "Video2.mp4";
+    cv::Mat frame2;
+    pthread_t thread2;
+    pthread_mutex_t mutex2;
+    pthread_mutex_init(&mutex2, NULL);
+    Camera camera2 = createCamera(pipeline2, &thread2, &mutex2, &frame2);
+    startCamera(&camera2);
+
     while (1) {
         // TODO: Get the first frame before starting this loop
         pthread_mutex_lock(&mutex);
-        if (!camera.frame->empty()) {
+        if (!camera.frame->empty() && !camera2.frame->empty()) {
             cv::imshow("frame", *camera.frame);
+            cv::imshow("frame2", *camera2.frame);
         } else {
             printf("Capture is empty\n");
         }

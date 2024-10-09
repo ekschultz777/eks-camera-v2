@@ -48,19 +48,7 @@ void *operation(void *arg) {
 
 // Run  on main thread
 Camera createCamera(char const *pipe, pthread_t *thread, pthread_mutex_t *mutex, cv::Mat *frame) {
-    // Cast to C++ string for OpenCV
-    // std::string const pipeString = pipe;
-    // printf("Created pipeline string: %s\n", pipeString.c_str());
-
-    // Declare variabless
-    // pthread_t thread;
-    // // TODO: Replace these when using GStreamer
-    // // int captureType = cv::CAP_GSTREAMER;
-    // // cv::VideoCapture capture = cv::VideoCapture(pipeString, captureType);
-    // cv::VideoCapture capture;
     bool running = false;
-    // cv::Mat frame;
-    // pthread_mutex_t mutex;
     pthread_mutex_init(mutex, NULL);
     Camera camera = { 
         .mutex = mutex,
@@ -72,34 +60,10 @@ Camera createCamera(char const *pipe, pthread_t *thread, pthread_mutex_t *mutex,
     if (pthread_create(thread, NULL, operation, &camera) != 0) {
         printf("Failed to properly initialize thread!\n");
     }
-
-    // Send them to a struct that keeps pointers (We need to 
-    // safely access each value from its pointer on a different 
-    // thread)
-    // Camera camera = { 
-    //     .thread = thread,
-    //     .mutex = mutex,
-    //     .pipeline = pipe,
-    //     .capture = capture,
-    //     .frame = frame,
-    //     .running = running,
-    // };
-    // pthread_mutex_lock(camera.mutex);
-    // if (pthread_create(&thread, NULL, operation, &camera) != 0) {
-    //     printf("Failed to properly initialize thread!\n");
-    // }
-    // pthread_mutex_unlock(camera.mutex);
-    // cv::Mat frame;
-    // (*camera.capture).read(frame);
     return camera;
 }
 
-// Run  on main thread
 void startCamera(Camera *camera) {
-    // pthread_mutex_init(camera->mutex, NULL);
-    // if (pthread_create(&camera->thread, NULL, operation, &camera) != 0) {
-    //     printf("Failed to properly initialize thread!\n");
-    // }
     if ((camera->running) != true) {
         camera->running = true;
     }
@@ -113,14 +77,6 @@ void updateCamera(Camera *camera) {
 
 }
 
-// void releaseCamera(Camera *camera) {
-//     // pthread_mutex_unlock(&(camera->mutex));
-//     pthread_mutex_lock(camera->mutex);
-//     pthread_cancel(*(camera->thread));
-//     pthread_mutex_unlock(camera->mutex);
-// }
-
-// ChatGPT generated
 void releaseCamera(Camera *camera) {
     pthread_mutex_lock(camera->mutex);
     // pthread_cancel(*camera->thread);
@@ -134,11 +90,6 @@ void releaseCamera(Camera *camera) {
     camera = nullptr; // Avoid dangling pointer
 }
 
-// int main() {
-//     return 0;
-// }
-
-// It seems that the lock is there because we need mutual exclusion on gstreamer as it is a shared resource. 
 
 /* Prototype code copied from Python
 class Camera:

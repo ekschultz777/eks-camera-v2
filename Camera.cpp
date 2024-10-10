@@ -22,7 +22,7 @@ void *operation(void *arg) {
     cv::VideoCapture capture(camera->pipeline);
 
     if (!(capture).isOpened()) {
-        printf("!!! Failed to open file: %s\n", "Video.mp4");
+        printf("Failed to open file: %s\n", camera->pipeline);
         return NULL;
     }
     pthread_mutex_unlock(camera->mutex);
@@ -69,7 +69,7 @@ Camera createCamera(char const *pipe) {
 }
 
 void startCamera(Camera *camera) {
-    
+
 }
 
 void stopCamera(Camera *camera) {

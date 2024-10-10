@@ -17,7 +17,6 @@ void *operation(void *arg) {
     Camera *camera = (Camera *)arg;
 
     pthread_mutex_lock(camera->mutex);
-    // std::string const pipeString = camera->pipeline;
     printf("Created pipeline string: %s\n", camera->pipeline);
     cv::VideoCapture capture(camera->pipeline);
 

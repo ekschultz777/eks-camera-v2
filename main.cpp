@@ -25,7 +25,7 @@ int main() {
     while (1) {
         // FIXME: Get the first frame before starting this loop, 
         // otherwise we will crash because the first frame has 
-        // not been correctly created. 
+        // not been correctly created.
         pthread_mutex_lock(camera.mutex);
         if (!camera.frame->empty()) {
             cv::imshow("frame", *camera.frame);

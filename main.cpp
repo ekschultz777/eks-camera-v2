@@ -22,13 +22,18 @@ int main() {
     double secondsPerFrame = (double) (1 / framesPerSecond);
     printf("Playing at %f fps\n", framesPerSecond);
 
+    // Move windows for display
+    cv::namedWindow(pipeline);
+    cv::namedWindow(pipeline2);
+    cv::moveWindow(pipeline2, 640, 0);
+
     while (1) {
         // FIXME: Get the first frame before starting this loop, 
         // otherwise we will crash because the first frame has 
         // not been correctly created.
         pthread_mutex_lock(camera.mutex);
         if (!camera.frame->empty()) {
-            cv::imshow("frame", *camera.frame);
+            cv::imshow(pipeline, *camera.frame);
         } else {
             printf("Capture is empty\n");
         }
@@ -36,7 +41,7 @@ int main() {
 
         pthread_mutex_lock(camera2.mutex);
         if (!camera2.frame->empty()) {
-            cv::imshow("frame2", *camera2.frame);
+            cv::imshow(pipeline2, *camera2.frame);
         } else {
             printf("Capture is empty\n");
         }

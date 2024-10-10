@@ -7,7 +7,7 @@
 #define CAMERA_H
 
 typedef struct {
-    // pthread_t thread;
+    pthread_t *thread;
     pthread_mutex_t *mutex;
     char const *pipeline;
     // cv::VideoCapture capture;
@@ -15,7 +15,7 @@ typedef struct {
     bool running;
 } Camera;
 
-Camera createCamera(char const *pipe, pthread_t *thread, pthread_mutex_t *mutex, cv::Mat *frame);
+Camera createCamera(char const *pipe);
 void startCamera(Camera *);
 void stopCamera(Camera *);
 void updateCamera(Camera *);

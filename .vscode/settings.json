@@ -9,6 +9,17 @@
         "stop_token": "cpp",
         "istream": "cpp",
         "*.tcc": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "__node_handle": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "queue": "cpp",
+        "set": "cpp",
+        "stack": "cpp",
+        "string_view": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "*.ipp": "cpp"
     }
 }

@@ -30,15 +30,14 @@ void *operation(void *arg) {
     // FIXME: Share this using camera struct
     double framesPerSecond = 30.0;
     double secondsPerFrame = (double) (1 / framesPerSecond);
-    printf("Playing at %f fps\n", framesPerSecond);
+    printf("Playing %s at %f fps\n", camera->pipeline, framesPerSecond);
     cv::Mat frame;
     while (1) {
-
+        pthread_mutex_lock(camera->mutex);
         if (!capture.read(frame)) {
             printf("Failed to capture frame\n");
         }
-        pthread_mutex_lock(camera->mutex);
-        *camera->frame = frame;
+        camera->frame = &frame;
         pthread_mutex_unlock(camera->mutex);
         // Sleep frame duration in microseconds
         usleep(secondsPerFrame * 1000 * 1000);
@@ -47,17 +46,22 @@ void *operation(void *arg) {
 }
 
 // Run  on main thread
-Camera createCamera(char const *pipe, pthread_t *thread, pthread_mutex_t *mutex, cv::Mat *frame) {
+Camera createCamera(char const *pipe) {
     bool running = false;
-    pthread_mutex_init(mutex, NULL);
+    // pthread_mutex_init(mutex, NULL);
+    cv::Mat frame;
+    pthread_t thread;
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
     Camera camera = { 
-        .mutex = mutex,
+        .thread = &thread,
+        .mutex = &mutex,
         .pipeline = pipe,
         // .capture = capture,
-        .frame = frame,
+        .frame = &frame,
         .running = running,
     };
-    if (pthread_create(thread, NULL, operation, &camera) != 0) {
+    if (pthread_create(&thread, NULL, operation, &camera) != 0) {
         printf("Failed to properly initialize thread!\n");
     }
     return camera;
@@ -89,7 +93,6 @@ void releaseCamera(Camera *camera) {
     delete camera->mutex; // Release mutex memory
     camera = nullptr; // Avoid dangling pointer
 }
-
 
 /* Prototype code copied from Python
 class Camera:

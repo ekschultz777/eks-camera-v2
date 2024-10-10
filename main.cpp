@@ -11,21 +11,11 @@ int main() {
     // TODO: Loop through this array
     // char const *pipelines[] = {"Video.mp4", "Video2.mp4"};
 
-    char const *pipeline = "Video.mp4";
-    // cv::Mat frame;
-    // pthread_t thread;
-    // pthread_mutex_t mutex;
-    // pthread_mutex_init(&mutex, NULL);
+    char const *pipeline = "Video3.mp4";
     Camera camera = createCamera(pipeline);
-    startCamera(&camera);
 
     char const *pipeline2 = "Video2.mp4";
-    // cv::Mat frame2;
-    // pthread_t thread2;
-    // pthread_mutex_t mutex2;
-    // pthread_mutex_init(&mutex2, NULL);
     Camera camera2 = createCamera(pipeline2);
-    startCamera(&camera2);
 
     // FIXME: Make this per camera and share
     double framesPerSecond = 30.0;
@@ -33,7 +23,9 @@ int main() {
     printf("Playing at %f fps\n", framesPerSecond);
 
     while (1) {
-        // TODO: Get the first frame before starting this loop
+        // FIXME: Get the first frame before starting this loop, 
+        // otherwise we will crash because the first frame has 
+        // not been correctly created. 
         pthread_mutex_lock(camera.mutex);
         if (!camera.frame->empty()) {
             cv::imshow("frame", *camera.frame);
@@ -57,7 +49,7 @@ int main() {
         }
     }
     // TODO: Release camera here
-    // releaseCamera(&camera);
+    releaseCamera(&camera);
     printf("Finishing...\n");
     return 0;
 }

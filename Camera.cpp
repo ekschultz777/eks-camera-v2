@@ -32,6 +32,8 @@ void *operation(void *arg) {
     double secondsPerFrame = (double) (1 / framesPerSecond);
     printf("Playing %s at %f fps\n", camera->pipeline, framesPerSecond);
     cv::Mat frame;
+
+
     while (1) {
         pthread_mutex_lock(camera->mutex);
         if (!capture.read(frame)) {
@@ -57,7 +59,6 @@ Camera createCamera(char const *pipe) {
         .thread = &thread,
         .mutex = &mutex,
         .pipeline = pipe,
-        // .capture = capture,
         .frame = &frame,
         .running = running,
     };
@@ -68,9 +69,9 @@ Camera createCamera(char const *pipe) {
 }
 
 void startCamera(Camera *camera) {
-    if ((camera->running) != true) {
-        camera->running = true;
-    }
+    // if ((camera->running) != true) {
+    //     camera->running = true;
+    // }
 }
 
 void stopCamera(Camera *camera) {
@@ -83,14 +84,10 @@ void updateCamera(Camera *camera) {
 
 void releaseCamera(Camera *camera) {
     pthread_mutex_lock(camera->mutex);
-    // pthread_cancel(*camera->thread);
-    // pthread_join(*(camera->thread), NULL); // Ensure the thread has finished
-    // delete camera->thread;
-    // delete camera.capture; // Release VideoCapture
-    delete camera->frame; // Release frame
-    // delete camera->running; // Release running flag
-    pthread_mutex_destroy(camera->mutex); // Destroy mutex
-    delete camera->mutex; // Release mutex memory
+    pthread_cancel(*camera->thread);
+    pthread_join(*(camera->thread), NULL); // Ensure the thread has finished
+    *camera->frame = NULL;
+    camera->frame = nullptr;
     camera = nullptr; // Avoid dangling pointer
 }
 

@@ -34,6 +34,9 @@ void *operation(void *arg) {
 
 
     while (1) {
+        if (camera == NULL) {
+            continue;
+        }
         pthread_mutex_lock(camera->mutex);
         if (!capture.read(frame)) {
             printf("Failed to capture frame\n");
@@ -84,6 +87,6 @@ void releaseCamera(Camera *camera) {
     pthread_cancel(*camera->thread);
     pthread_join(*(camera->thread), NULL);
     *camera->frame = NULL;
-    camera->frame = nullptr;
-    camera = nullptr;
+    camera->frame = NULL;
+    camera = NULL;
 }

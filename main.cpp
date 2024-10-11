@@ -32,7 +32,7 @@ int main() {
         // otherwise we will crash because the first frame has 
         // not been correctly created.
         pthread_mutex_lock(camera.mutex);
-        if (!camera.frame->empty()) {
+        if (camera.frame != NULL && !camera.frame->empty()) {
             cv::imshow(pipeline, *camera.frame);
         } else {
             printf("Capture is empty\n");
@@ -40,7 +40,7 @@ int main() {
         pthread_mutex_unlock(camera.mutex);
 
         pthread_mutex_lock(camera2.mutex);
-        if (!camera2.frame->empty()) {
+        if (camera2.frame != NULL && !camera2.frame->empty()) {
             cv::imshow(pipeline2, *camera2.frame);
         } else {
             printf("Capture is empty\n");

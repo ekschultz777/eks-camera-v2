@@ -26,11 +26,6 @@ void *operation(void *arg) {
     }
     pthread_mutex_unlock(camera->mutex);
 
-    // FIXME: Share this using camera struct
-    double framesPerSecond = 30.0;
-    double secondsPerFrame = (double) (1 / framesPerSecond);
-    printf("Playing %s at %f fps\n", camera->pipeline, framesPerSecond);
-
     while (1) {
         if (camera == NULL) {
             break;
@@ -53,7 +48,7 @@ void *operation(void *arg) {
         }
         pthread_mutex_unlock(camera->mutex);
         // Sleep frame duration in microseconds
-        usleep(secondsPerFrame * 1000 * 1000);
+        usleep((1.0 / camera->fps) * 1000 * 1000);
     }
     return NULL;
 }
@@ -69,6 +64,7 @@ void initCamera(Camera *camera, char const *pipe) {
         .pipeline = pipe,
         .frame = frame,
         .status = INITIALIZED,
+        .fps = 30.0, // Determine this rather than hard code
     };
     if (pthread_create(camera->threadId, NULL, operation, camera) != 0) {
         printf("Failed to properly initialize thread!\n");

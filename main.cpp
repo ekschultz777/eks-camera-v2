@@ -6,49 +6,10 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-// Run  on background thread
-// void *openFrame(void *arg) {
-//     Camera *camera = (Camera *)arg;
-
-//     pthread_mutex_lock(camera->mutex);
-//     printf("Created pipeline string: %s\n", camera->pipeline);
-//     cv::VideoCapture capture(camera->pipeline);
-
-//     if (!(capture).isOpened()) {
-//         printf("Failed to open file: %s\n", camera->pipeline);
-//         return NULL;
-//     }
-//     pthread_mutex_unlock(camera->mutex);
-
-//     // FIXME: Share this using camera struct
-//     double framesPerSecond = 30.0;
-//     double secondsPerFrame = (double) (1 / framesPerSecond);
-//     printf("Playing %s at %f fps\n", camera->pipeline, framesPerSecond);
-
-//     while (1) {
-//         if (camera == NULL) {
-//             break;
-//         }
-//         pthread_mutex_lock(camera->mutex);
-//         printf("%s frame location %p on thread %p\n", camera->pipeline, camera->frame, camera->threadId);
-//         if (!capture.read(*camera->frame)) {
-//             printf("Failed to capture frame\n");
-//         }
-//         pthread_mutex_unlock(camera->mutex);
-//         // Sleep frame duration in microseconds
-//         usleep(secondsPerFrame * 1000 * 1000);
-//     }
-//     return NULL;
-// }
-
 int main() {
+    // TODO: make this a dynamic array of unknown length
     char const *pipelines[] = {"Video2.mp4", "Video3.mp4"};
     const int pipelinesLength = (sizeof(pipelines) / sizeof(pipelines[0]));
-
-    // FIXME: Make this per camera and share
-    double framesPerSecond = 30.0;
-    double secondsPerFrame = (double) (1 / framesPerSecond);
-    printf("Playing at %f fps\n", framesPerSecond);
 
     Camera *cameras[2];
 
@@ -63,14 +24,9 @@ int main() {
     }
 
     while (1) {
-        // FIXME: Get the first frame before starting this loop, 
-        // otherwise we will crash because the first frame has 
-        // not been correctly created.
-        
-        // Do not show any cameras until all cameras are ready.
+        // Set flag to allow cameras to begin reading frames.
         bool autoStart = true;
         for (int i=0; i<pipelinesLength; i++) {
-            // When a camera is ready to display, the status will be set to PAUSED
             pthread_mutex_lock(cameras[i]->mutex);
             if (cameras[i]->status != READY) {
                 autoStart = false;
@@ -80,6 +36,7 @@ int main() {
                 break;
             }
         }
+
         if (autoStart) {
             for (int i=0; i<pipelinesLength; i++) {
                 pthread_mutex_lock(cameras[i]->mutex);
@@ -87,9 +44,9 @@ int main() {
                 pthread_mutex_unlock(cameras[i]->mutex);
             }
         }
+
         // Show all camera frames
         for (int i=0; i<pipelinesLength; i++) {
-            // TODO: Add logic to synchronize frames here.
             pthread_mutex_lock(cameras[i]->mutex);
             if (cameras[i]->frame != NULL && !cameras[i]->frame->empty()) {
                 cv::imshow(cameras[i]->pipeline, *cameras[i]->frame);
@@ -99,8 +56,8 @@ int main() {
             pthread_mutex_unlock(cameras[i]->mutex);
         }
 
-        // Hold frame for duration in milliseconds
-        int key = cv::waitKey(secondsPerFrame * 1000);
+        // Refresh rate in milliseconds. Currently using 60Hz
+        int key = cv::waitKey((1.0 / 60.0) * 1000.0);
         if (key == 27) { // ESC key
             break;
         }

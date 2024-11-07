@@ -19,10 +19,11 @@ typedef struct {
     char const *pipeline;
     cv::Mat *frame;
     enum Status status;
+    double fps;
 } Camera;
 
 void initCamera(Camera *camera, char const *pipe);
-void startCamera(Camera *);
+void startCamera(Camera *camera);
 void stopCamera(Camera *);
 void updateCamera(Camera *);
 void releaseCamera(Camera *);

@@ -62,7 +62,6 @@ Camera createCamera(char const *pipe) {
         .mutex = &mutex,
         .pipeline = pipe,
         .frame = &frame,
-        .running = running,
     };
     if (pthread_create(&thread, NULL, operation, &camera) != 0) {
         printf("Failed to properly initialize thread!\n");

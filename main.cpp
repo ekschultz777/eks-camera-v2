@@ -8,10 +8,10 @@
 
 int main() {
     // TODO: make this a dynamic array of unknown length
-    char const *pipelines[] = {"Video2.mp4", "Video3.mp4"};
+    char const *pipelines[] = {"Video.mp4", "Video2.mp4", "Video3.mp4"};
     const int pipelinesLength = (sizeof(pipelines) / sizeof(pipelines[0]));
 
-    Camera *cameras[2];
+    Camera *cameras[3];
 
     // Move windows for display
     for (int i=0; i<pipelinesLength; i++) {

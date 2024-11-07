@@ -30,18 +30,27 @@ void *operation(void *arg) {
     double framesPerSecond = 30.0;
     double secondsPerFrame = (double) (1 / framesPerSecond);
     printf("Playing %s at %f fps\n", camera->pipeline, framesPerSecond);
-    cv::Mat frame;
-
 
     while (1) {
         if (camera == NULL) {
-            continue;
+            break;
         }
         pthread_mutex_lock(camera->mutex);
-        if (!capture.read(frame)) {
-            printf("Failed to capture frame\n");
+        // TODO: Synchronize frames here using a different flag then running
+        switch (camera->status) {
+            case INITIALIZED:
+                camera->status = READY;
+                pthread_mutex_unlock(camera->mutex);
+                continue;
+            case READY:
+                break;
+            case RUNNING:
+                if (!capture.read(*camera->frame)) {
+                    printf("Failed to capture frame\n");
+                }
+            case PAUSED:
+                break;
         }
-        camera->frame = &frame;
         pthread_mutex_unlock(camera->mutex);
         // Sleep frame duration in microseconds
         usleep(secondsPerFrame * 1000 * 1000);
@@ -49,24 +58,22 @@ void *operation(void *arg) {
     return NULL;
 }
 
-// Run  on main thread
-Camera createCamera(char const *pipe) {
-    bool running = false;
-    // pthread_mutex_init(mutex, NULL);
-    cv::Mat frame;
-    pthread_t thread;
-    pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, NULL);
-    Camera camera = { 
-        .thread = &thread,
-        .mutex = &mutex,
+void initCamera(Camera *camera, char const *pipe) {
+    pthread_t *threadId = (pthread_t *)malloc(sizeof(pthread_t));
+    pthread_mutex_t *mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(mutex, NULL);
+    cv::Mat *frame = (cv::Mat *)malloc(sizeof(cv::Mat));
+    *camera = {
+        .threadId = threadId,
+        .mutex = mutex,
         .pipeline = pipe,
-        .frame = &frame,
+        .frame = frame,
+        .status = INITIALIZED,
     };
-    if (pthread_create(&thread, NULL, operation, &camera) != 0) {
+    if (pthread_create(camera->threadId, NULL, operation, camera) != 0) {
         printf("Failed to properly initialize thread!\n");
     }
-    return camera;
+
 }
 
 void startCamera(Camera *camera) {
@@ -83,9 +90,15 @@ void updateCamera(Camera *camera) {
 
 void releaseCamera(Camera *camera) {
     pthread_mutex_lock(camera->mutex);
-    pthread_cancel(*camera->thread);
-    pthread_join(*(camera->thread), NULL);
-    *camera->frame = NULL;
+    pthread_mutex_destroy(camera->mutex);
+    free(camera->mutex);
+    pthread_cancel(*camera->threadId);
+    free(camera->threadId);
+    free((void *)camera->frame);
+    free((void *)camera);
+    camera->threadId = NULL;
+    camera->mutex = NULL;
+    camera->pipeline = NULL;
     camera->frame = NULL;
     camera = NULL;
 }

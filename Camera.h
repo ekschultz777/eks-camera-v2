@@ -6,14 +6,22 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+enum Status {
+    INITIALIZED = 0,
+    READY = 1,
+    RUNNING = 2,
+    PAUSED = 3
+};
+
 typedef struct {
-    pthread_t *thread;
+    pthread_t *threadId;
     pthread_mutex_t *mutex;
     char const *pipeline;
     cv::Mat *frame;
+    enum Status status;
 } Camera;
 
-Camera createCamera(char const *pipe);
+void initCamera(Camera *camera, char const *pipe);
 void startCamera(Camera *);
 void stopCamera(Camera *);
 void updateCamera(Camera *);
